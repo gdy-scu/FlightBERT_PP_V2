@@ -11,7 +11,7 @@ This is an extended version of our previous work <a href="https://ojs.aaai.org/i
 
 ## Repository Structure
 ```
-FlightBERT++
+FlightBERT_PP_V2
 │  dataloader.py (Load trajectory data from ./data)
 │  LICENSE (LICENSE file)
 │  model.py (The neural architecture corresponding to the FlightBERT++ framework)
