@@ -151,7 +151,7 @@ class FlightBERT_PP(nn.Module):
                                              max_len=config.inp_seq_len + config.horizon)
 
         # transformer encoder
-        encoder_layers = TransformerEncoderLayer(config.n_embd, config.n_head, config.n_embd, config.encoder_drop)
+        encoder_layers = TransformerEncoderLayer(config.n_embd, config.n_head, config.n_embd*2, config.encoder_drop, batch_first=True)
         self.transformer_encoder = TransformerEncoder(encoder_layers, config.n_en_layer)
 
         # self.transformer_encoder = nn.Sequential(*[Block(config) for _ in range(config.n_en_layer)])
@@ -163,10 +163,10 @@ class FlightBERT_PP(nn.Module):
         self.horizon_emb = nn.Embedding(num_embeddings=config.horizon, embedding_dim=config.n_embd)
         self.horizon_linear = nn.Linear(config.n_embd * 2, config.n_embd)
 
-        # decoder_layers = TransformerDecoderLayer(config.n_embd, config.n_head, config.n_embd, config.encoder_drop)
-        # self.transformer_decoder = TransformerDecoder(decoder_layers, config.n_de_layer)
+        decoder_layers = nn.TransformerDecoderLayer(config.n_embd, config.n_head, config.n_embd*2, config.encoder_drop, batch_first=True)
+        self.decoder = nn.TransformerDecoder(decoder_layers, config.n_de_layer)
 
-        self.decoder = nn.Sequential(*[Block(config) for _ in range(config.n_de_layer)])
+        # self.decoder = nn.Sequential(*[Block(config) for _ in range(config.n_de_layer)])
 
         # decoder head
         self.ln_f = nn.LayerNorm(config.n_embd)
@@ -222,7 +222,8 @@ class FlightBERT_PP(nn.Module):
 
         decoder_input = self.de_pos_emb(decoder_input.transpose(1, 0)).transpose(1, 0)
 
-        fea = self.decoder(decoder_input)
+        fea = self.decoder(decoder_input, tgt_mask=None, memory=encoder_output)
+        # fea = self.decoder(decoder_input)
 
         fea = self.ln_f(fea)
         logits = self.head(fea)
